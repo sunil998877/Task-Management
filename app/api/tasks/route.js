@@ -1,6 +1,6 @@
 import DB from "@/lib/db";
 import Task from "@/models/task";
-import queue from "@/lib/queue";
+import { addJob } from "@/lib/queue";
 
 export async function POST(req) {
     try {
@@ -13,8 +13,8 @@ export async function POST(req) {
             status: "pending",
         });
 
-        await queue.add("task", {
-            taskID: task._id,
+        await addJob({
+            taskId: task._id,
             input,
             operation
         });
