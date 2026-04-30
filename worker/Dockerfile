@@ -4,6 +4,6 @@ WORKDIR /worker
 
 COPY . .
 
-RUN pip install redis rq pymongo
+RUN pip install redis bullmq pymongo
 
 CMD ["python", "worker.py"]

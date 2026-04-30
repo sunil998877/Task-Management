@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+spec:
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          image: worker
+          imagePullPolicy: Never
+          env:
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: MONGO_URI
+              value: mongodb://mongo:27017/test
