@@ -2,8 +2,9 @@ import time
 from redis import Redis
 from rq import Worker, Queue
 import pymongo
+# remove the collection name from the mongo connection string
 
-# Redis connection
+# Redis connection 
 redis_conn = Redis(host="redis", port=6379)
 
 # Mongo connection
