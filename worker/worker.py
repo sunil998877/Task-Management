@@ -1,14 +1,15 @@
-import time
+import os
 from redis import Redis
 from rq import Worker, Queue
 import pymongo
-# remove the collection name from the mongo connection string
 
-# Redis connection 
-redis_conn = Redis(host="redis", port=6379)
+# Redis connection
+redis_uri = os.getenv("REDIS_URI", "redis://redis:6379")
+redis_conn = Redis.from_url(redis_uri)
 
 # Mongo connection
-mongo = pymongo.MongoClient("mongodb://mongo:27017/")
+mongo_uri = os.getenv("MONGO_URI", "mongodb://mongo:27017/")
+mongo = pymongo.MongoClient(mongo_uri)
 db = mongo["taskDB"]
 
 def process_task(job):
@@ -35,6 +36,6 @@ def process_task(job):
     )
 
 if __name__ == "__main__":
-    queue = Queue("default", connection=redis_conn)
+    queue = Queue("TaskQueue", connection=redis_conn)
     worker = Worker([queue], connection=redis_conn)
     worker.work()
