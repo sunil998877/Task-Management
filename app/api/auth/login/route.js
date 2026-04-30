@@ -5,9 +5,15 @@ import jwt from "jsonwebtoken";
 import DB from "@/lib/db";
 
 export async function POST(request) {
-    await DB();
     try {
-        const { username, password } = await request.json();
+        await DB();
+        const body = await request.json();
+        
+        if (!body || !body.username || !body.password) {
+            return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
+        }
+
+        const { username, password } = body;
         
         const user = await User.findOne({ username: username.trim() });
         if (!user) {
@@ -41,6 +47,8 @@ export async function POST(request) {
         return response;
     } catch (error) {
         console.error("Login error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ 
+            error: error.message || "Internal Server Error" 
+        }, { status: 500 });
     }
 }
