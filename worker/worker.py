@@ -4,6 +4,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from redis import Redis
 import pymongo
+from bson import ObjectId # ObjectId support add kiya
 
 # --- Health Check Server for Render ---
 class HealthCheckHandler(BaseHTTPRequestHandler):
@@ -28,11 +29,16 @@ db = mongo["taskDB"]
 
 def process_task(job_data):
     try:
-        task_id = job_data["taskId"]
+        task_id_str = job_data["taskId"]
+        # Convert string ID to MongoDB ObjectId
+        task_id = ObjectId(task_id_str)
+        
         input_text = job_data["input"]
         op = job_data["operation"]
 
-        print(f"Processing task {task_id}: {op} on '{input_text}'")
+        print(f"Processing task {task_id_str}: {op} on '{input_text}'")
+        
+        # Status update to 'running'
         db.tasks.update_one({"_id": task_id}, {"$set": {"status": "running"}})
 
         if op == "uppercase":
@@ -46,16 +52,16 @@ def process_task(job_data):
         else:
             result = "Invalid Operation"
 
+        # Status update to 'success'
         db.tasks.update_one(
             {"_id": task_id},
             {"$set": {"status": "success", "result": result}}
         )
-        print(f"Task {task_id} completed!")
+        print(f"Task {task_id_str} completed!")
     except Exception as e:
-        print(f"Error processing task: {e}")
+        print(f"Error processing task {job_data.get('taskId')}: {e}")
 
 if __name__ == "__main__":
-    # Start health check server in a background thread
     threading.Thread(target=run_health_server, daemon=True).start()
 
     print("Worker started. Listening for tasks on 'TaskQueue'...")
