@@ -13,8 +13,22 @@ export default function Dashboard() {
     const fetchTasks = async () => {
         try {
             const res = await fetch("/api/tasks");
-            if (!res.ok) return;
-            const data = await res.json();
+            
+            let data;
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                data = await res.json();
+            } else {
+                const text = await res.text();
+                console.error("Non-JSON response received from /api/tasks:", text);
+                return;
+            }
+
+            if (!res.ok) {
+                console.error("API error:", data.error);
+                return;
+            }
+
             setTasks(data.tasks || []);
         } catch (e) {
             console.error("Failed to fetch tasks:", e);
@@ -34,13 +48,26 @@ export default function Dashboard() {
         }
         setIsLoading(true);
         try {
-            await fetch("/api/tasks", {
+            const res = await fetch("/api/tasks", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ input, operation }),
             });
+
+            if (!res.ok) {
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const data = await res.json();
+                    throw new Error(data.error || "Failed to create task");
+                } else {
+                    throw new Error(`Server error (${res.status}). Please check your Vercel logs.`);
+                }
+            }
+
             setInput("");
             await fetchTasks();
+        } catch (e) {
+            alert(e.message);
         } finally {
             setIsLoading(false);
         }
